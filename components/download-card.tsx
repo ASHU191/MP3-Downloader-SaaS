@@ -19,34 +19,55 @@ export function DownloadCard({ videoInfo }: DownloadCardProps) {
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [fileReady, setFileReady] = useState(videoInfo.status !== "processing")
   const [fileSize, setFileSize] = useState(videoInfo.fileSize)
+  const [mounted, setMounted] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Fix hydration issues
+  useEffect(() => {
+    setMounted(true)
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+    }
+  }, [])
 
   // Poll for file readiness if still processing
   useEffect(() => {
-    if (videoInfo.status === "processing") {
-      const checkProgress = async () => {
-        try {
-          const response = await fetch(`/api/progress/${videoInfo.id}`)
-          const data = await response.json()
+    if (!mounted || videoInfo.status !== "processing") return
 
+    const checkProgress = async () => {
+      try {
+        const response = await fetch(`/api/progress/${videoInfo.id}`)
+        if (response.ok) {
+          const data = await response.json()
           if (data.ready) {
             setFileReady(true)
             setFileSize(`${data.sizeInMB} MB`)
-          } else {
-            // Continue polling
-            setTimeout(checkProgress, 2000) // Check every 2 seconds
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current)
+            }
           }
-        } catch (error) {
-          console.error("Error checking progress:", error)
-          // Retry after delay
-          setTimeout(checkProgress, 5000)
         }
+      } catch (error) {
+        console.error("Error checking progress:", error)
       }
-
-      // Start checking after 3 seconds
-      setTimeout(checkProgress, 3000)
     }
-  }, [videoInfo.id, videoInfo.status])
+
+    // Start polling after 3 seconds
+    const timeoutId = setTimeout(() => {
+      checkProgress() // Check immediately
+      pollIntervalRef.current = setInterval(checkProgress, 3000) // Then every 3 seconds
+    }, 3000)
+
+    return () => {
+      clearTimeout(timeoutId)
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+    }
+  }, [videoInfo.id, videoInfo.status, mounted])
 
   const handleDownload = async () => {
     if (!fileReady) {
@@ -95,14 +116,20 @@ export function DownloadCard({ videoInfo }: DownloadCardProps) {
       const format = videoInfo.format || "mp3"
       const extension = format === "mp3" ? "mp3" : format
 
+      // Create and trigger download
       const link = document.createElement("a")
       link.href = blobUrl
       link.download = `${videoInfo.title.replace(/[^a-z0-9\s]/gi, "").replace(/\s+/g, "_")}.${extension}`
+
+      // Append to body, click, then remove
       document.body.appendChild(link)
       link.click()
 
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(blobUrl)
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(blobUrl)
+      }, 100)
 
       alert(`¡Descarga completada! Archivo ${extension.toUpperCase()} descargado.`)
     } catch (error) {
@@ -115,7 +142,7 @@ export function DownloadCard({ videoInfo }: DownloadCardProps) {
   }
 
   const handlePlayPause = () => {
-    if (!fileReady) {
+    if (!fileReady || !mounted) {
       alert("El archivo aún se está procesando.")
       return
     }
@@ -124,7 +151,10 @@ export function DownloadCard({ videoInfo }: DownloadCardProps) {
       if (isPlaying) {
         audioRef.current.pause()
       } else {
-        audioRef.current.play()
+        audioRef.current.play().catch((error) => {
+          console.error("Error playing audio:", error)
+          alert("No se pudo reproducir el audio.")
+        })
       }
       setIsPlaying(!isPlaying)
     }
@@ -134,6 +164,22 @@ export function DownloadCard({ videoInfo }: DownloadCardProps) {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
+  if (!mounted) {
+    return (
+      <div className="max-w-2xl mx-auto mb-8">
+        <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+          <CardContent className="pt-6">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+              <div className="h-32 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -167,7 +213,7 @@ export function DownloadCard({ videoInfo }: DownloadCardProps) {
             {/* Thumbnail */}
             <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden bg-gray-100">
               <Image
-                src={videoInfo.thumbnail || "/placeholder.svg"}
+                src={videoInfo.thumbnail || "/placeholder.svg?height=180&width=320"}
                 alt={videoInfo.title}
                 fill
                 className="object-cover"
@@ -208,13 +254,15 @@ export function DownloadCard({ videoInfo }: DownloadCardProps) {
               </div>
 
               {/* Audio Player */}
-              <audio
-                ref={audioRef}
-                src={fileReady ? videoInfo.downloadUrl : undefined}
-                onEnded={() => setIsPlaying(false)}
-                className="hidden"
-                crossOrigin="anonymous"
-              />
+              {mounted && (
+                <audio
+                  ref={audioRef}
+                  src={fileReady ? videoInfo.downloadUrl : undefined}
+                  onEnded={() => setIsPlaying(false)}
+                  className="hidden"
+                  crossOrigin="anonymous"
+                />
+              )}
 
               <div className="flex gap-2">
                 <Button
