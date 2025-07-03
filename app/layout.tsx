@@ -41,7 +41,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://youtube-mp3-downloader.vercel.app",
   },
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -52,10 +51,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/icon.png" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={inter.className}>
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">{children}</div>
