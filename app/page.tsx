@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,19 +17,34 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [systemStatus, setSystemStatus] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
 
-  // Check system dependencies on load
+  // Fix hydration issues
   useEffect(() => {
-    checkSystemStatus()
+    setMounted(true)
   }, [])
+
+  // Check system dependencies after mount
+  useEffect(() => {
+    if (mounted) {
+      checkSystemStatus()
+    }
+  }, [mounted])
 
   const checkSystemStatus = async () => {
     try {
       const response = await fetch("/api/system-check")
-      const data = await response.json()
-      setSystemStatus(data)
+      if (response.ok) {
+        const data = await response.json()
+        setSystemStatus(data)
+      }
     } catch (error) {
       console.error("Error checking system status:", error)
+      // Set default status if check fails
+      setSystemStatus({
+        checks: { ytDlp: false, youtubeDl: false },
+        recommendations: ["Sistema en modo básico"],
+      })
     }
   }
 
@@ -58,12 +72,12 @@ export default function HomePage() {
         body: JSON.stringify({ videoId, url }),
       })
 
-      const data = await response.json()
-
       if (!response.ok) {
-        throw new Error(data.error || "Error al procesar el video")
+        const errorData = await response.json().catch(() => ({ error: "Error de conexión" }))
+        throw new Error(errorData.error || "Error al procesar el video")
       }
 
+      const data = await response.json()
       setVideoInfo(data)
       console.log("✅ Quick response received, processing in background")
     } catch (err: any) {
@@ -74,12 +88,21 @@ export default function HomePage() {
     }
   }
 
+  // Don't render until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* System Status Alert */}
       {systemStatus && (
         <div className="max-w-2xl mx-auto mb-6">
-          {!systemStatus.checks.ytDlp && !systemStatus.checks.youtubeDl ? (
+          {!systemStatus.checks?.ytDlp && !systemStatus.checks?.youtubeDl ? (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
@@ -87,7 +110,7 @@ export default function HomePage() {
                 <details className="mt-2">
                   <summary className="cursor-pointer">Instalar para mejor velocidad</summary>
                   <ul className="mt-2 space-y-1">
-                    {systemStatus.recommendations.map((rec: string, index: number) => (
+                    {systemStatus.recommendations?.map((rec: string, index: number) => (
                       <li key={index} className="text-sm">
                         • {rec}
                       </li>
