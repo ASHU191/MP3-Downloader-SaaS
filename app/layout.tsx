@@ -1,18 +1,18 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
+import type React from "react";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Descargador de MP3 de YouTube Gratis y Rápido",
   description:
-    "Convierte fácilmente videos de YouTube a MP3 en alta calidad. Gratis, sin registro, y compatible con todos los dispositivos.",
+    "Convierte fácilmente videos de YouTube a MP3 en alta calidad. Gratis, sin registro y compatible con todos los dispositivos.",
   keywords: "youtube mp3, descargar mp3, convertidor youtube, mp3 gratis, youtube a mp3",
-  authors: [{ name: "YouTube MP3 Downloader" }],
-  creator: "YouTube MP3 Downloader",
-  publisher: "YouTube MP3 Downloader",
+  authors: [{ name: "Descargador de MP3 de YouTube" }], // "YouTube MP3 Downloader" -> "Descargador de MP3 de YouTube"
+  creator: "Descargador de MP3 de YouTube",
+  publisher: "Descargador de MP3 de YouTube",
   robots: "index, follow",
   openGraph: {
     type: "website",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     siteName: "Descargador de MP3 de YouTube",
     title: "Descargador de MP3 de YouTube Gratis y Rápido",
     description:
-      "Convierte fácilmente videos de YouTube a MP3 en alta calidad. Gratis, sin registro, y compatible con todos los dispositivos.",
+      "Convierte fácilmente videos de YouTube a MP3 en alta calidad. Gratis, sin registro y compatible con todos los dispositivos.",
     images: [
       {
         url: "/og-image.png",
@@ -35,18 +35,18 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Descargador de MP3 de YouTube Gratis y Rápido",
     description:
-      "Convierte fácilmente videos de YouTube a MP3 en alta calidad. Gratis, sin registro, y compatible con todos los dispositivos.",
+      "Convierte fácilmente videos de YouTube a MP3 en alta calidad. Gratis, sin registro y compatible con todos los dispositivos.",
     images: ["/og-image.png"],
   },
   alternates: {
     canonical: "https://youtube-mp3-downloader.vercel.app",
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="es">
@@ -59,5 +59,5 @@ export default function RootLayout({
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">{children}</div>
       </body>
     </html>
-  )
+  );
 }
