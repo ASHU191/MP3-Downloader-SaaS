@@ -1,68 +1,67 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Download, Music, Youtube, Zap, Shield, Smartphone, AlertTriangle, CheckCircle, Settings } from "lucide-react"
-import { DownloadCard } from "@/components/download-card"
-import { validateYouTubeUrl, extractVideoId } from "@/lib/utils"
-import type { VideoInfo } from "@/types"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Download, Music, Youtube, Zap, Shield, Smartphone, AlertTriangle, CheckCircle, Settings } from "lucide-react";
+import { DownloadCard } from "@/components/download-card";
+import { validateYouTubeUrl, extractVideoId } from "@/lib/utils";
+import type { VideoInfo } from "@/types";
 
 export default function HomePage() {
-  const [url, setUrl] = useState("")
-  const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [systemStatus, setSystemStatus] = useState<any>(null)
-  const [mounted, setMounted] = useState(false)
+  const [url, setUrl] = useState("");
+  const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
 
   // Fix hydration issues
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   // Check system dependencies after mount
   useEffect(() => {
     if (mounted) {
-      checkSystemStatus()
+      checkSystemStatus();
     }
-  }, [mounted])
+  }, [mounted]);
 
   const checkSystemStatus = async () => {
     try {
-      const response = await fetch("/api/system-check")
+      const response = await fetch("/api/system-check");
       if (response.ok) {
-        const data = await response.json()
-        setSystemStatus(data)
+        const data = await response.json();
+        setSystemStatus(data);
       }
     } catch (error) {
-      console.error("Error checking system status:", error)
-      // Set default status if check fails
+      console.error("Error checking system status:", error);
       setSystemStatus({
         checks: { ytDlp: false, youtubeDl: false },
-        recommendations: ["Sistema en modo básico"],
-      })
+        recommendations: ["System running in basic mode"],
+      });
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setVideoInfo(null)
+    e.preventDefault();
+    setError("");
+    setVideoInfo(null);
 
     if (!validateYouTubeUrl(url)) {
-      setError("Por favor, ingresa una URL válida de YouTube")
-      return
+      setError("Please enter a valid YouTube URL");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
-      const videoId = extractVideoId(url)
-      console.log("🚀 Starting fast conversion for:", videoId)
+      const videoId = extractVideoId(url);
+      console.log("🚀 Starting fast conversion for:", videoId);
 
       const response = await fetch("/api/convert", {
         method: "POST",
@@ -70,31 +69,30 @@ export default function HomePage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ videoId, url }),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Error de conexión" }))
-        throw new Error(errorData.error || "Error al procesar el video")
+        const errorData = await response.json().catch(() => ({ error: "Connection error" }));
+        throw new Error(errorData.error || "Error processing the video");
       }
 
-      const data = await response.json()
-      setVideoInfo(data)
-      console.log("✅ Quick response received, processing in background")
+      const data = await response.json();
+      setVideoInfo(data);
+      console.log("✅ Quick response received, processing in background");
     } catch (err: any) {
-      console.error("❌ Conversion error:", err)
-      setError(err.message || "Error al procesar el video. Por favor, intenta de nuevo.")
+      console.error("❌ Conversion error:", err);
+      setError(err.message || "Error processing the video. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // Don't render until mounted to prevent hydration issues
   if (!mounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-600"></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -106,9 +104,9 @@ export default function HomePage() {
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Modo básico:</strong> Usando servicios online (más lento).
+                <strong>Basic mode:</strong> Using online services (slower).
                 <details className="mt-2">
-                  <summary className="cursor-pointer">Instalar para mejor velocidad</summary>
+                  <summary className="cursor-pointer">Install for faster speed</summary>
                   <ul className="mt-2 space-y-1">
                     {systemStatus.recommendations?.map((rec: string, index: number) => (
                       <li key={index} className="text-sm">
@@ -123,7 +121,7 @@ export default function HomePage() {
             <Alert className="border-green-200 bg-green-50">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
-                <strong>⚡ Modo rápido activado:</strong> Conversión optimizada disponible.
+                <strong>⚡ Fast mode enabled:</strong> Optimized conversion available.
                 <Button
                   variant="ghost"
                   size="sm"
@@ -131,7 +129,7 @@ export default function HomePage() {
                   className="ml-2 h-6 px-2 text-green-700 hover:text-green-800"
                 >
                   <Settings className="h-3 w-3 mr-1" />
-                  Verificar
+                  Check
                 </Button>
               </AlertDescription>
             </Alert>
@@ -147,10 +145,10 @@ export default function HomePage() {
           </div>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-          YouTube a MP3
+          YouTube to MP3
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Convierte videos de YouTube a MP3 de forma súper rápida ⚡
+          Convert YouTube videos to MP3 super fast ⚡
         </p>
       </header>
 
@@ -158,9 +156,9 @@ export default function HomePage() {
       <div className="max-w-2xl mx-auto mb-12">
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Conversión Rápida ⚡</CardTitle>
+            <CardTitle className="text-2xl text-center">Fast Conversion ⚡</CardTitle>
             <CardDescription className="text-center">
-              Pega la URL del video de YouTube - conversión en segundos
+              Paste your YouTube video URL - conversion in seconds
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -187,7 +185,7 @@ export default function HomePage() {
                   ) : (
                     <>
                       <Download className="mr-2 h-5 w-5" />
-                      Convertir ⚡
+                      Convert ⚡
                     </>
                   )}
                 </Button>
@@ -208,15 +206,15 @@ export default function HomePage() {
 
       {/* Features */}
       <div className="max-w-6xl mx-auto mt-16">
-        <h2 className="text-3xl font-bold text-center mb-12">Conversión Súper Rápida ⚡</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">Super Fast Conversion ⚡</h2>
         <div className="grid md:grid-cols-3 gap-8">
           <Card className="text-center border-0 bg-white/60 backdrop-blur-sm">
             <CardContent className="pt-6">
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Zap className="h-8 w-8 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Súper Rápido ⚡</h3>
-              <p className="text-gray-600">Respuesta inmediata, descarga en segundos</p>
+              <h3 className="text-xl font-semibold mb-2">Super Fast ⚡</h3>
+              <p className="text-gray-600">Instant response, download in seconds</p>
             </CardContent>
           </Card>
 
@@ -225,8 +223,8 @@ export default function HomePage() {
               <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Shield className="h-8 w-8 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Optimizado</h3>
-              <p className="text-gray-600">Algoritmos optimizados para máxima velocidad</p>
+              <h3 className="text-xl font-semibold mb-2">Optimized</h3>
+              <p className="text-gray-600">Algorithms optimized for maximum speed</p>
             </CardContent>
           </Card>
 
@@ -235,8 +233,8 @@ export default function HomePage() {
               <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Smartphone className="h-8 w-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Sin Esperas</h3>
-              <p className="text-gray-600">Procesamiento en segundo plano</p>
+              <h3 className="text-xl font-semibold mb-2">No Waiting</h3>
+              <p className="text-gray-600">Background processing</p>
             </CardContent>
           </Card>
         </div>
@@ -244,9 +242,9 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="text-center mt-16 py-8 border-t border-gray-200">
-        <p className="text-gray-600">© 2025 YouTube MP3 Downloader. Creado por Muhammad Arsalan.</p>
-        <p className="text-sm text-gray-500 mt-2">Conversión súper rápida ⚡</p>
+        <p className="text-gray-600">© 2025 YouTube MP3 Downloader. Created by Muhammad Arsalan.</p>
+        <p className="text-sm text-gray-500 mt-2">Super fast conversion ⚡</p>
       </footer>
     </div>
-  )
+  );
 }
