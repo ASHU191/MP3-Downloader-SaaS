@@ -100,7 +100,7 @@ export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* System Status Alert */}
-      {systemStatus && (
+{/*       {systemStatus && (
         <div className="max-w-2xl mx-auto mb-6">
           {!systemStatus.checks?.ytDlp && !systemStatus.checks?.youtubeDl ? (
             <Alert variant="destructive">
@@ -137,7 +137,7 @@ export default function HomePage() {
             </Alert>
           )}
         </div>
-      )}
+      )} */}
 
       {/* Header */}
       <header className="text-center mb-12">
